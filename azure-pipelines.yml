@@ -1,0 +1,47 @@
+trigger:
+- main  # Adjust based on your branch strategy
+
+pool:
+  vmImage: 'windows-latest'
+
+steps:
+- task: PowerShell@2
+  displayName: 'Install Pester & PSScriptAnalyzer'
+  inputs:
+    targetType: 'inline'
+    script: |
+      Install-Module Pester -Force -SkipPublisherCheck
+      Install-Module PSScriptAnalyzer -Force -SkipPublisherCheck
+      Import-Module Pester
+      Import-Module PSScriptAnalyzer
+
+- task: PowerShell@2
+  displayName: 'Run PSScriptAnalyzer'
+  inputs:
+    targetType: 'inline'
+    script: |
+      $scripts = Get-ChildItem -Path "$(Build.SourcesDirectory)" -Filter "*.ps1" -Recurse | Where-Object { $_.Name -notmatch '\.tests\.ps1$' }
+      $results = Invoke-ScriptAnalyzer -Path $scripts.FullName -Recurse
+      $results | Format-Table -AutoSize
+      if ($results) { Write-Error "PSScriptAnalyzer found issues." }
+
+- task: PowerShell@2
+  displayName: 'Run Pester Tests'
+  inputs:
+    targetType: 'inline'
+    script: |
+      $testResults = "$(Build.ArtifactStagingDirectory)/TestResults.xml"
+      $tests = Get-ChildItem -Path "$(Build.SourcesDirectory)" -Filter "*.tests.ps1" -Recurse
+      if ($tests) {
+        $config = New-PesterConfiguration -OutputFile $testResults -OutputFormat NUnitXML
+        Invoke-Pester -Script $tests.FullName -Configuration $config
+      } else {
+        Write-Host "No Pester test files found."
+      }
+
+- task: PublishTestResults@2
+  displayName: 'Publish Pester Test Results'
+  inputs:
+    testResultsFiles: '$(Build.ArtifactStagingDirectory)/TestResults.xml'
+    testRunTitle: 'Pester Tests'
+    failTaskOnFailedTests: true
