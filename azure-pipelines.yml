@@ -20,18 +20,24 @@ steps:
   inputs:
     targetType: 'inline'
     script: |
-      $scripts = Get-ChildItem -Path "$(Build.SourcesDirectory)" -Filter "*.ps1" -Recurse | Where-Object { $_.Name -notmatch '\.tests\.ps1$' }
-      $results = Invoke-ScriptAnalyzer -Path $scripts.FullName -Recurse | Select-Object RuleName, Severity, Line, Message
+      $scripts = Get-ChildItem -Path "." -Filter "*.ps1" -Recurse | Where-Object { $_.Name -notmatch '\.tests\.ps1$' }
 
-      if ($results) {
-        Write-Host "##vso[task.logissue type=warning]PSScriptAnalyzer found issues:"
-        $results | ForEach-Object { 
-          Write-Host "##vso[task.logissue type=warning;sourcepath=$($_.RuleName)] Line $($_.Line): $($_.Message)"
-        }
-        exit 0  # Prevent pipeline failure due to warnings
-      } else {
-        Write-Host "No PSScriptAnalyzer issues found."
+      $results = @()  # Initialize an empty array to store results
+
+      foreach ($script in $scripts) {
+          $analysis = Invoke-ScriptAnalyzer -Path $script.FullName -Recurse
+          if ($analysis) {
+              $results += $analysis  # Append results to the array
+          }
       }
+
+      # Display results
+      if ($results) {
+          $results | Format-Table -AutoSize
+      } else {
+          Write-Output "No issues found by PSScriptAnalyzer."
+      }
+
 
 
 - task: PowerShell@2
