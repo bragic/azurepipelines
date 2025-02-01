@@ -83,3 +83,10 @@ steps:
 #       } else {
 #         Write-Host "No Pester test files found."
 #       }
+
+# - task: PublishTestResults@2
+#   displayName: 'Publish Pester Test Results'
+#   inputs:
+#     testResultsFiles: '$(Build.ArtifactStagingDirectory)/TestResults.xml'
+#     testRunTitle: 'Pester Tests'
+#     failTaskOnFailedTests: true
