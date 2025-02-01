@@ -60,3 +60,26 @@ steps:
     testResultsFiles: '$(Build.ArtifactStagingDirectory)/TestResults.xml'
     testRunTitle: 'Pester Tests'
     failTaskOnFailedTests: true
+
+# - task: PowerShell@2
+#   displayName: 'Run Pester Tests'
+#   inputs:
+#     targetType: 'inline'
+#     script: |
+#       $testResults = "$(Build.ArtifactStagingDirectory)/TestResults.xml"
+#       $tests = Get-ChildItem -Path "$(Build.SourcesDirectory)" -Filter "*.tests.ps1" -Recurse
+      
+#       if ($tests) {
+#         # Create a Pester configuration object
+#         $config = New-PesterConfiguration
+#         $config.Run.Path = $tests.FullName
+#         $config.Output.Verbosity = 'Detailed'  # Adjust as needed
+#         $config.TestResult.Enabled = $true
+#         $config.TestResult.OutputFormat = 'NUnitXml'
+#         $config.TestResult.OutputPath = $testResults
+        
+#         # Run Pester with the configuration
+#         Invoke-Pester -Configuration $config
+#       } else {
+#         Write-Host "No Pester test files found."
+#       }
